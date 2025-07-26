@@ -29,9 +29,11 @@ export default function Home() {
               Essayer gratuitement
             </Button>
           </Link>
-          <Button variant="outline" className="px-8 py-3 text-lg">
-            En savoir plus
-          </Button>
+          <Link to="/pricing">
+            <Button variant="outline" className="px-8 py-3 text-lg">
+              Voir les forfaits
+            </Button>
+          </Link>
         </div>
       </section>
 

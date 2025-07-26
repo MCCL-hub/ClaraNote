@@ -1,0 +1,133 @@
+// ClaraNote React App avec forfaits et routes
+
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+
+function Home() {
+  return (
+    <div className="p-8 text-center">
+      <h2 className="text-3xl font-bold mb-4">Bienvenue sur ClaraNote</h2>
+      <p className="text-lg mb-6">Générez automatiquement vos comptes-rendus de réunions en français grâce à l’IA.</p>
+      <div className="space-x-4">
+        <Link to="/app" className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Tester ClaraNote</Link>
+        <Link to="/pricing" className="inline-block border border-blue-600 text-blue-600 px-6 py-2 rounded hover:bg-blue-50">Voir les forfaits</Link>
+      </div>
+    </div>
+  );
+}
+
+function Pricing() {
+  return (
+    <div className="p-8 max-w-3xl mx-auto">
+      <h2 className="text-3xl font-bold text-center mb-8">Nos forfaits</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="border p-6 rounded shadow bg-white">
+          <h3 className="text-xl font-bold mb-2">Gratuit</h3>
+          <p className="mb-4">3 réunions / mois<br/>Limité à 20 minutes / réunion</p>
+          <button className="w-full border border-blue-600 text-blue-600 py-2 rounded hover:bg-blue-50">Commencer</button>
+        </div>
+        <div className="border-2 border-blue-600 p-6 rounded shadow bg-white">
+          <h3 className="text-xl font-bold mb-2">Pro - 29€/mois</h3>
+          <p className="mb-4">Réunions illimitées<br/>Export PDF<br/>Support prioritaire</p>
+          <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">S'abonner</button>
+        </div>
+        <div className="border p-6 rounded shadow bg-white">
+          <h3 className="text-xl font-bold mb-2">Business - 79€/mois</h3>
+          <p className="mb-4">Multi-utilisateur<br/>Intégrations (Notion, Drive)<br/>Fonctionnalités avancées</p>
+          <button className="w-full border border-blue-600 text-blue-600 py-2 rounded hover:bg-blue-50">Contacter</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Claranote() {
+  const [transcript, setTranscript] = React.useState("");
+  const [summary, setSummary] = React.useState("");
+  const [pdfUrl, setPdfUrl] = React.useState("");
+  const [file, setFile] = React.useState<File | null>(null);
+
+  const BASE_URL = "https://ton-backend.repl.co"; // Remplace par ton URL backend
+
+  async function uploadAudio() {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE_URL}/upload`, { method: "POST", body: formData });
+    const data = await res.json();
+    return data.path;
+  }
+
+  async function transcribeAudio(path: string) {
+    const res = await fetch(`${BASE_URL}/transcribe`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path })
+    });
+    const data = await res.json();
+    setTranscript(data.transcription);
+  }
+
+  async function summarize() {
+    const res = await fetch(`${BASE_URL}/summary`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: transcript })
+    });
+    const data = await res.json();
+    setSummary(data.summary);
+  }
+
+  async function exportPDF() {
+    const res = await fetch(`${BASE_URL}/export-pdf`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ summary })
+    });
+    const data = await res.json();
+    setPdfUrl(data.file_url);
+  }
+
+  return (
+    <div className="p-6 max-w-xl mx-auto">
+      <h2 className="text-2xl font-semibold mb-4">Tester ClaraNote</h2>
+      <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="mb-4" />
+      <button onClick={async () => {
+        const path = await uploadAudio();
+        if (path) await transcribeAudio(path);
+      }} className="w-full bg-blue-600 text-white py-2 rounded mb-4">Transcrire</button>
+
+      <textarea value={transcript} readOnly rows={6} className="w-full p-2 border rounded mb-4" placeholder="Transcription..." />
+
+      <button onClick={summarize} className="w-full bg-green-600 text-white py-2 rounded mb-4">Générer le résumé</button>
+
+      <textarea value={summary} readOnly rows={6} className="w-full p-2 border rounded mb-4" placeholder="Résumé..." />
+
+      <button onClick={exportPDF} className="w-full bg-purple-600 text-white py-2 rounded mb-2">Exporter en PDF</button>
+
+      {pdfUrl && <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="block text-blue-700 underline text-center">Télécharger le PDF</a>}
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50 text-gray-800">
+        <nav className="flex justify-between items-center p-4 shadow bg-white">
+          <h1 className="text-xl font-bold">ClaraNote</h1>
+          <div className="space-x-4">
+            <Link to="/" className="hover:underline">Accueil</Link>
+            <Link to="/pricing" className="hover:underline">Forfaits</Link>
+            <Link to="/app" className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Tester</Link>
+          </div>
+        </nav>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/app" element={<Claranote />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}

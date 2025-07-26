@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "./pages/Home";
+import Pricing from "./pages/Pricing";
 import Claranote from "./pages/Claranote";
 
 function App() {
@@ -17,12 +18,14 @@ function App() {
               <h1 className="text-xl font-bold">ClaraNote</h1>
               <div className="space-x-4">
                 <Link to="/" className="hover:underline">Accueil</Link>
+                <Link to="/pricing" className="hover:underline">Forfaits</Link>
                 <Link to="/app" className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Tester</Link>
               </div>
             </nav>
 
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/app" element={<Claranote />} />
             </Routes>
           </div>
