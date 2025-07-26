@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+openai
+whisper
+torch
+fpdf
+transformers
+langchain
