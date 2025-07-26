@@ -1,0 +1,174 @@
+### [main.py](http://main.py/)
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from routers import upload, transcription, summary, export
+
+app = FastAPI()
+
+app.add_middleware(
+CORSMiddleware,
+allow_origins=["*"],
+allow_credentials=True,
+allow_methods=["*"],
+allow_headers=["*"],
+)
+
+app.include_router(upload.router)
+app.include_router(transcription.router)
+app.include_router(summary.router)
+app.include_router(export.router)
+
+@app.get("/ping")
+def ping():
+return {"message": "ClaraNote API is live!"}
+
+### routers/upload.py
+
+from fastapi import APIRouter, UploadFile, File
+import os
+
+router = APIRouter()
+
+UPLOAD_DIR = "tmp_audio"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@router.post("/upload")
+def upload_audio(file: UploadFile = File(...)):
+file_location = os.path.join(UPLOAD_DIR, file.filename)
+with open(file_location, "wb") as f:
+f.write(file.file.read())
+return {"filename": file.filename, "path": file_location}
+
+### routers/transcription.py
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+from services.whisper_transcriber import transcribe_audio
+
+router = APIRouter()
+
+class TranscriptionRequest(BaseModel):
+path: str
+
+@router.post("/transcribe")
+def transcribe(request: TranscriptionRequest):
+transcription = transcribe_audio(request.path)
+return {"transcription": transcription}
+
+### routers/summary.py
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+from services.summarizer import summarize_text
+
+router = APIRouter()
+
+class SummaryRequest(BaseModel):
+text: str
+
+@router.post("/summary")
+def summarize(request: SummaryRequest):
+summary = summarize_text(request.text)
+return {"summary": summary}
+
+### routers/export.py
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+from services.pdf_generator import generate_pdf
+
+router = APIRouter()
+
+class ExportRequest(BaseModel):
+summary: str
+
+@router.post("/export-pdf")
+def export_pdf(request: ExportRequest):
+file_url = generate_pdf(request.summary)
+return {"file_url": file_url}
+
+### services/whisper_transcriber.py
+
+import whisper
+
+def transcribe_audio(path: str) -> str:
+model = whisper.load_model("base")
+result = model.transcribe(path, language='fr')
+return result['text']
+
+### services/summarizer.py
+
+def summarize_text(text: str) -> str:
+# Version simplifiée (sans modèle NLP pour MVP)
+return f"""
+Participants : À définir
+Thèmes abordés : Extrait des sujets évoqués
+Décisions prises : À synthétiser
+Actions à suivre : À planifier
+
+Résumé :
+{text[:1000]}...
+"""
+
+### services/pdf_generator.py
+
+from fpdf import FPDF
+import os
+
+EXPORT_DIR = "static/exports"
+os.makedirs(EXPORT_DIR, exist_ok=True)
+
+def generate_pdf(summary: str) -> str:
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", size=12)
+for line in summary.split('\n'):
+pdf.multi_cell(0, 10, line)
+
+```
+filename = "summary.pdf"
+filepath = os.path.join(EXPORT_DIR, filename)
+pdf.output(filepath)
+return f"/{EXPORT_DIR}/{filename}"
+
+```
+
+### requirements.txt
+
+fastapi
+uvicorn
+pydantic
+python-multipart
+openai
+whisper
+torch
+fpdf
+transformers
+langchain
+
+### [README.md](http://readme.md/)
+
+# ClaraNote (MVP)
+
+API pour générer des comptes-rendus de réunion :
+
+## Endpoints disponibles
+
+- `/upload` : upload audio
+- `/transcribe` : transcription IA en français
+- `/summary` : résumé structuré
+- `/export-pdf` : génère un PDF du compte-rendu
+- `/ping` : test API
+
+## Lancer le projet
+
+```bash
+pip install -r requirements.txt
+uvicorn main:app --reload
+
+```
+
+Les fichiers audio sont stockés dans `tmp_audio/` et les PDF dans `static/exports/`.
+
+Back-end MVP prêt à intégrer un front ou à tester en Postman.
