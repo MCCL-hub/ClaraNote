@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ClaraNote - Générateur de compte-rendu</title>
+<style>
+body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 2rem; }
+input, button, textarea { width: 100%; margin-top: 1rem; padding: 0.5rem; }
+</style>
+</head>
+<body>
+<h1>ClaraNote</h1>
+<p>1. Uploade un fichier audio (.mp3, .wav)</p>
+<input type="file" id="audioFile" />
+<button onclick="uploadAudio()">Envoyer</button>
+<div id="step2" style="display:none">
+<p>2. Transcrire</p>
+<button onclick="transcribeAudio()">Transcrire</button>
+</div>
+<div id="step3" style="display:none">
+<p>3. Résumer</p>
+<button onclick="summarizeText()">Résumé IA</button>
+</div>
+<div id="step4" style="display:none">
+<p>4. Exporter en PDF</p>
+<button onclick="exportPDF()">Exporter PDF</button>
+</div>
+<textarea id="transcript" rows="8" placeholder="Transcription..." readonly></textarea>
+<textarea id="summary" rows="8" placeholder="Résumé IA..." readonly></textarea>
+<div id="pdfLink"></div>
+
+<script>
+let uploadedFile = null;
+
+async function uploadAudio() {
+const file = document.getElementById('audioFile').files[0];
+const formData = new FormData();
+formData.append("file", file);
+
+const res = await fetch("http://localhost:8000/upload", {
+method: "POST",
+body: formData
+});
+const data = await res.json();
+uploadedFile = data.path;
+alert("Fichier envoyé !");
+document.getElementById("step2").style.display = "block";
+}
+
+async function transcribeAudio() {
+const res = await fetch("http://localhost:8000/transcribe", {
+method: "POST",
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ path: uploadedFile })
+});
+const data = await res.json();
+document.getElementById("transcript").value = data.transcription;
+document.getElementById("step3").style.display = "block";
+}
+
+async function summarizeText() {
+const text = document.getElementById("transcript").value;
+const res = await fetch("http://localhost:8000/summary", {
+method: "POST",
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ text })
+});
+const data = await res.json();
+document.getElementById("summary").value = data.summary;
+document.getElementById("step4").style.display = "block";
+}
+
+async function exportPDF() {
+const summary = document.getElementById("summary").value;
+const res = await fetch("http://localhost:8000/export-pdf", {
+method: "POST",
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ summary })
+});
+const data = await res.json();
+document.getElementById("pdfLink").innerHTML = `<a href="${data.file_url}" target="_blank">Télécharger le PDF</a>`;
+}
+</script>
+</body>
+</html>
