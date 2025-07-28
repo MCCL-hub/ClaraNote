@@ -1,5 +1,5 @@
 astapi
-uvicorn
+uvicorn[standard]
 pydantic
 python-multipart
 openai
