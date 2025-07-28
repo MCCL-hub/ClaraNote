@@ -1,10 +1,1 @@
-fastapi
-uvicorn
-pydantic
-python-multipart
-openai
-whisperx
-torch
-fpdf
-transformers
-langchain
+
