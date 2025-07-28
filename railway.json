@@ -1,0 +1,7 @@
+{
+  "build": {
+    "dockerfilePath": "python_backend/Dockerfile",
+    "context": "python_backend"
+  },
+  "start": "uvicorn main:app --host 0.0.0.0 --port $PORT"
+}
