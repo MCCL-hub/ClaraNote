@@ -6,5 +6,5 @@ openai
 whisperx
 torch
 fpdf
-transformers
+ctransformers
 langchain
